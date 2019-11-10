@@ -70,13 +70,15 @@ class SystemairSaveVTR(object):
                 self._input_regs[k]['value'] = \
                     self._conn.read_holding_registers(
                         unit=self._slave,
-                        address=self._input_regs[k]['addr']
+                        address=self._input_regs[k]['addr'],
+                        count=1
                     ).registers
             for k in self._holding_regs:
                 self._holding_regs[k]['value'] = \
                     self._conn.read_holding_registers(
                         unit=self._slave,
-                        address=self._holding_regs[k]['addr']
+                        address=self._holding_regs[k]['addr'],
+                        count=1
                     ).registers
         except AttributeError:
             # The unit does not reply reliably
