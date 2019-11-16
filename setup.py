@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="pysystemair_save_vtr",
-    version="0.1.4",
+    version="0.1.5",
     author="Almir Delkic",
     description="Wrapper for modbus communication with Systemair SAVE VTR units.",
     url="https://github.com/almirdelkic/pysystemair_save_vtr",
