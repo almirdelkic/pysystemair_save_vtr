@@ -3,8 +3,6 @@ Systemair_SAVE_VTR is python wrapper for modbus communication with Systemair SAV
 """
 REGMAP_INPUT = {
     'REG_FILTER_REMAINING_TIME_L':      {'addr':   7004, 'value': 0},#Remaining filter time in seconds, lower 16 bits
-    'REG_SENSOR_SAT':                   {'addr':  12102, 'value': 0},#Supply Air Temperature sensor (standard)
-    'REG_SENSOR_OAT':                   {'addr':  12101, 'value': 0},#Outdoor Air Temperature sensor (standard)
     'REG_OUTPUT_Y3_DIGITAL':            {'addr':  14201, 'value': 0},#Cooler DO state:0: Output not active1: Output active
     'REG_OUTPUT_Y3_ANALOG':             {'addr':  14200, 'value': 0},#Cooler AO state
     'REG_OUTPUT_Y2_DIGITAL':            {'addr':  14103, 'value': 0},#Heat Exchanger DO state.0: Output not active1: Output active
@@ -14,12 +12,17 @@ REGMAP_INPUT = {
     'REG_FILTER_ALARM_WAS_DETECTED':    {'addr':   7006, 'value': 0},#Indicates if the filter warning alarm was generated.
     'REG_TC_SP_SATC':                   {'addr':   2053, 'value': 0},#Temperature setpoint for the supply air temperature
     'REG_USERMODE_MODE':                {'addr':   1160, 'value': 0},#Active User mode.0: Auto1: Manual2: Crowded3: Refresh4: Fireplace5: Away6: Holiday7: Cooker Hood8: Vacuum Cleaner9: CDI110: CDI211: CDI312: PressureGuard
-    'REG_SENSOR_PDM_EAT_VALUE':         {'addr':  12543, 'value': 0}#PDM EAT sensor value (standard)
+
 }
+
 REGMAP_HOLDING = {
     'REG_USERMODE_MANUAL_AIRFLOW_LEVEL_SAF':    {'addr':  1130, 'value': 0}, #Fan speed level for mode Manual, supply fan.(1): value Off only allowed if contents of register 1352 is 1.(1): Off 2: Low 3: Normal 4:High
     'REG_USERMODE_MANUAL_AIRFLOW_LEVEL_EAF':    {'addr':  1131, 'value': 0}, #Fan speed level for mode Manual, extract fan. 2: Low 3: Normal 4: High
-    'REG_TC_SP':                                {'addr':  2000, 'value': 0} #Temperature setpoint for the supply air temperature
+    'REG_TC_SP':                                {'addr':  2000, 'value': 0}, #Temperature setpoint for the supply air temperature
+    'REG_SENSOR_RHS_PDM':                       {'addr': 12135, 'value': 0}, #PDM RHS sensor value (standard)
+    'REG_SENSOR_PDM_EAT_VALUE':                 {'addr': 12543, 'value': 0}, #PDM EAT sensor value (standard)
+    'REG_SENSOR_SAT':                           {'addr': 12102, 'value': 0}, #Supply Air Temperature sensor (standard)
+    'REG_SENSOR_OAT':                           {'addr': 12101, 'value': 0}  #Outdoor Air Temperature sensor (standard)
 }
 
 
@@ -36,7 +39,7 @@ class SystemairSaveVTR(object):
     _slave : int
         Slave number of the unit.
     _conn : ModbusClient
-        Modbus client used to communicate with the unit.
+        Modbus client (pymodbus.client) used to communicate with the unit.
     """
     def __init__(self, conn, slave, update_on_read=False):
         self._conn = conn
@@ -44,6 +47,7 @@ class SystemairSaveVTR(object):
         self._holding_regs = REGMAP_HOLDING
         self._slave = slave
         self._setpoint_temp = None
+        self._current_humidity = None
         self._supply_temp = None
         self._extract_temp = None
         self._outdoor_temp = None
@@ -87,12 +91,14 @@ class SystemairSaveVTR(object):
 
         self._setpoint_temp = \
             (self._input_regs['REG_TC_SP_SATC']['value'][0] / 10.0)
+        self._current_humidity = \
+            (self._holding_regs['REG_SENSOR_RHS_PDM']['value'][0])
         self._supply_temp = \
-            (self._input_regs['REG_SENSOR_SAT']['value'][0] / 10.0)
+            (self._holding_regs['REG_SENSOR_SAT']['value'][0] / 10.0)
         self._extract_temp = \
-            (self._input_regs['REG_SENSOR_PDM_EAT_VALUE']['value'][0] / 10.0)
+            (self._holding_regs['REG_SENSOR_PDM_EAT_VALUE']['value'][0] / 10.0)
         self._outdoor_temp = \
-            (self.get_twos_comp(self._input_regs['REG_SENSOR_OAT']['value'][0]) / 10.0)
+            (self.get_twos_comp(self._holding_regs['REG_SENSOR_OAT']['value'][0]) / 10.0)
         self._user_mode = \
             self.get_user_mode_switch(self._input_regs['REG_USERMODE_MODE']['value'][0])
         self._filter_warning = \
@@ -209,6 +215,13 @@ class SystemairSaveVTR(object):
         if self._update_on_read:
             self.update()
         return self._setpoint_temp
+
+    @property
+    def get_current_humidity(self):
+        """Get  current humidity."""
+        if self._update_on_read:
+            self.update()
+        return self._current_humidity
 
     @property
     def get_user_mode(self):
