@@ -265,7 +265,7 @@ class SystemairSaveVTR(object):
         self._conn.write_register(
             unit=self._slave,
             address=(self._holding_regs['REG_ROTOR_RH_TRANSFER_CTRL_SETPOINT']['addr']),
-            value=rhs)
+            value=int(rhs))
 
     @property
     def get_setpoint_humidity(self):
