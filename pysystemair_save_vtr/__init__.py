@@ -12,7 +12,7 @@ REGMAP_INPUT = {
     'REG_FILTER_ALARM_WAS_DETECTED':    {'addr':   7006, 'value': 0},#Indicates if the filter warning alarm was generated.
     'REG_TC_SP_SATC':                   {'addr':   2053, 'value': 0},#Temperature setpoint for the supply air temperature
     'REG_USERMODE_MODE':                {'addr':   1160, 'value': 0},#Active User mode.0: Auto1: Manual2: Crowded3: Refresh4: Fireplace5: Away6: Holiday7: Cooker Hood8: Vacuum Cleaner9: CDI110: CDI211: CDI312: PressureGuard
-
+    'REG_SPEED_SAF_DESIRED_OFF':        {'addr':   1351, 'value': 0},#Indicates that the SAF shall be turned off once the electrical reheater is cooled down
 }
 
 REGMAP_HOLDING = {
@@ -69,6 +69,7 @@ class SystemairSaveVTR(object):
         self._fan_speed_supply = None
         self._fan_speed_extract = None
         self._update_on_read = update_on_read
+        self._fan_can_turn_off = None
 
     def update(self):
         """
@@ -133,6 +134,8 @@ class SystemairSaveVTR(object):
             (self._holding_regs['REG_USERMODE_MANUAL_AIRFLOW_LEVEL_SAF']['value'][0])
         self._fan_speed_extract = \
             (self._holding_regs['REG_USERMODE_MANUAL_AIRFLOW_LEVEL_EAF']['value'][0])
+        self._fan_can_turn_off = \
+            (self._holding_regs['REG_ROTOR_RH_TRANSFER_CTRL_SETPOINT']['value'][0])
 
         return ret
 
@@ -350,3 +353,10 @@ class SystemairSaveVTR(object):
         if self._update_on_read:
             self.update()
         return self._cooler_state
+
+    @property
+    def get_fan_can_turn_off(self):
+        """Return if fan can be turned off."""
+        if self._update_on_read:
+            self.update()
+        return self._fan_can_turn_off
