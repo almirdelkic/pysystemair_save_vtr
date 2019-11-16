@@ -22,7 +22,9 @@ REGMAP_HOLDING = {
     'REG_SENSOR_RHS_PDM':                       {'addr': 12135, 'value': 0}, #PDM RHS sensor value (standard)
     'REG_SENSOR_PDM_EAT_VALUE':                 {'addr': 12543, 'value': 0}, #PDM EAT sensor value (standard)
     'REG_SENSOR_SAT':                           {'addr': 12102, 'value': 0}, #Supply Air Temperature sensor (standard)
-    'REG_SENSOR_OAT':                           {'addr': 12101, 'value': 0}  #Outdoor Air Temperature sensor (standard)
+    'REG_SENSOR_OAT':                           {'addr': 12101, 'value': 0}, #Outdoor Air Temperature sensor (standard)
+    'REG_TC_CASCADE_SP_MIN':                    {'addr':  2020, 'value': 0}, #Minimum temperature set point for the SATC
+    'REG_TC_CASCADE_SP_MAX':                    {'addr':  2021, 'value': 0}  #Maximum temperature set point for the SATC
 }
 
 
@@ -47,6 +49,8 @@ class SystemairSaveVTR(object):
         self._holding_regs = REGMAP_HOLDING
         self._slave = slave
         self._setpoint_temp = None
+        self._setpoint_temp_max = None
+        self._setpoint_temp_min = None
         self._current_humidity = None
         self._supply_temp = None
         self._extract_temp = None
@@ -91,6 +95,10 @@ class SystemairSaveVTR(object):
 
         self._setpoint_temp = \
             (self._input_regs['REG_TC_SP_SATC']['value'][0] / 10.0)
+        self._setpoint_temp_max = \
+            (self._holding_regs['REG_TC_CASCADE_SP_MAX']['value'][0] / 10.0)
+        self._setpoint_temp_min = \
+            (self._holding_regs['REG_TC_CASCADE_SP_MIN']['value'][0] / 10.0)
         self._current_humidity = \
             (self._holding_regs['REG_SENSOR_RHS_PDM']['value'][0])
         self._supply_temp = \
@@ -215,6 +223,32 @@ class SystemairSaveVTR(object):
         if self._update_on_read:
             self.update()
         return self._setpoint_temp
+
+    def set_setpoint_temp_max(self, temp):
+        self._conn.write_register(
+            unit=self._slave,
+            address=(self._holding_regs['REG_TC_CASCADE_SP_MAX']['addr']),
+            value=round(temp * 10.0))
+
+    @property
+    def get_setpoint_temp_max(self):
+        """Get setpoint temperature max."""
+        if self._update_on_read:
+            self.update()
+        return self._setpoint_temp_max
+
+    def set_setpoint_temp_min(self, temp):
+        self._conn.write_register(
+            unit=self._slave,
+            address=(self._holding_regs['REG_TC_CASCADE_SP_MIN']['addr']),
+            value=round(temp * 10.0))
+
+    @property
+    def get_setpoint_temp_min(self):
+        """Get setpoint temperature min."""
+        if self._update_on_read:
+            self.update()
+        return self._setpoint_temp_min
 
     @property
     def get_current_humidity(self):
