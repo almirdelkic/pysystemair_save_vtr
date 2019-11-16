@@ -21,7 +21,7 @@ Package consists of SystemairSaveVTR module and can be used in following way::
     unit = SystemairSaveVTR(client, 1)
     unit.update()
 
-
+Where client it a ModBus client and second argument i slave.
 
 ===========================
 Hardware compatibility list
@@ -29,7 +29,7 @@ Hardware compatibility list
 
 The module has been testet with following hardware:
 
-* Systemair SAVE VTR 300
+* Systemair SAVE VTR 300 B
 * Systemair Internet Access Module (IAM) for modbus communication
 
 If you test it with other units, please let me know or even better update the list above.
