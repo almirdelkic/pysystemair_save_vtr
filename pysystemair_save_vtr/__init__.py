@@ -24,7 +24,8 @@ REGMAP_HOLDING = {
     'REG_SENSOR_SAT':                           {'addr': 12102, 'value': 0}, #Supply Air Temperature sensor (standard)
     'REG_SENSOR_OAT':                           {'addr': 12101, 'value': 0}, #Outdoor Air Temperature sensor (standard)
     'REG_TC_CASCADE_SP_MIN':                    {'addr':  2020, 'value': 0}, #Minimum temperature set point for the SATC
-    'REG_TC_CASCADE_SP_MAX':                    {'addr':  2021, 'value': 0}  #Maximum temperature set point for the SATC
+    'REG_TC_CASCADE_SP_MAX':                    {'addr':  2021, 'value': 0}, #Maximum temperature set point for the SATC
+    'REG_ROTOR_RH_TRANSFER_CTRL_SETPOINT':      {'addr':  2202, 'value': 0}  #Set point setting for RH transfer control
 }
 
 
@@ -52,6 +53,7 @@ class SystemairSaveVTR(object):
         self._setpoint_temp_max = None
         self._setpoint_temp_min = None
         self._current_humidity = None
+        self._setpoint_humidity = None
         self._supply_temp = None
         self._extract_temp = None
         self._outdoor_temp = None
@@ -101,6 +103,8 @@ class SystemairSaveVTR(object):
             (self._holding_regs['REG_TC_CASCADE_SP_MIN']['value'][0] / 10.0)
         self._current_humidity = \
             (self._holding_regs['REG_SENSOR_RHS_PDM']['value'][0])
+        self._setpoint_humidity = \
+            (self._holding_regs['REG_ROTOR_RH_TRANSFER_CTRL_SETPOINT']['value'][0])
         self._supply_temp = \
             (self._holding_regs['REG_SENSOR_SAT']['value'][0] / 10.0)
         self._extract_temp = \
@@ -256,6 +260,19 @@ class SystemairSaveVTR(object):
         if self._update_on_read:
             self.update()
         return self._current_humidity
+
+    def set_setpoint_humidity(self, rhs):
+        self._conn.write_register(
+            unit=self._slave,
+            address=(self._holding_regs['REG_ROTOR_RH_TRANSFER_CTRL_SETPOINT']['addr']),
+            value=rhs)
+
+    @property
+    def get_setpoint_humidity(self):
+        """Get setpoint temperature."""
+        if self._update_on_read:
+            self.update()
+        return self._setpoint_humidity
 
     @property
     def get_user_mode(self):
